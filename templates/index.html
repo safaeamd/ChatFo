@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chatbot</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            background-color: #ACDOCO;
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            -o-background-size: cover;
+            background-size: cover;
+        }
+
+        #exam-output {
+            margin-top: 20px;
+        }
+        .container {
+            max-width: calc(100% - 220px);
+            margin-left: 20px;
+        }
+
+        #search-history-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            height: 100vh;
+            background-color: #75B1A9;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        #search-history {
+            padding: 10px;
+            color: white;
+        }
+
+        #chat-history {
+            height: calc(100vh - 200px);
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-left: 290px;
+        }
+
+        .search-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .search-item i {
+            margin-right: 10px;
+        }
+
+        .professor-count {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #professor-image {
+            width: 50px;
+            height: 50px;
+            background-color: #4F6457;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+
+        #question-form {
+            max-width: 500px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+        }
+
+        #question-input {
+            flex: 1;
+            margin-right: 10px;
+            width: 350px;
+        }
+
+        #generate-button {
+            position: relative;
+            top: -10px;
+            height:40px;
+            margin-left: 10px;
+            background-color:#75B1A9;
+        }
+
+        #search-history-bar #new-chat {
+            border: 1px solid white;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        #search-history-bar,
+        #chat-history {
+            background-color: #75B1A9;
+        }
+
+        #search-history-bar,
+        #chat-history,
+        #search-history-bar h3,
+        #search-history-bar .search-item,
+        #chat-history p {
+            color: white;
+        }
+
+        /* Added styles */
+        #clear-history-button {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        #chat-title {
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        #chatbot-container {
+            display: flex;
+        }
+
+        #search-history-bar {
+            width: 250px;
+            margin-left: 20px;
+        }
+
+        #chat-history {
+            max-width: calc(100% - 300px);
+        }
+
+        #chat-history::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #chat-history::-webkit-scrollbar-thumb {
+            background-color: #ACDOCO;
+            border-radius: 4px;
+        }
+
+        #chat-history::-webkit-scrollbar-track {
+            background-color: #75B1A9;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="ay" class="text-center mt-5">Chatform</h1>
+    <div id="chatbot-container">
+        <div id="search-history-bar">
+            <div id="new-chat" class="d-flex align-items-center justify-content-center">
+                <button id="refresh-button" class="btn btn-transparent" type="button"><i class="fas fa-plus"></i> New Chat</button>
+            </div>
+            <h3>Search History:</h3>
+            <div id="search-history"></div>
+            <button id="clear-history-button" class="btn btn-danger" type="button">Clear History</button>
+            <div class="professor-count">
+                <div id="professor-image"></div>
+                <p><strong>Professor Count:</strong> <span id="professor-count">0</span></p>
+            </div>
+        </div>
+        <div id="chat-history" class="container mt-5"></div>
+    </div>
+    <form id="question-form" class="mt-5">
+        <div class="form-group">
+            <input type="text" class="form-control" id="question-input" placeholder="Enter your question" required>
+        </div>
+        <button id="generate-button" class="btn btn-primary" type="submit">Generate</button>
+    </form>
+    <div id="exam-output"></div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.10.0/jspdf.umd.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Load search history from local storage
+            var questionHistory = localStorage.getItem('questionHistory');
+            if (questionHistory) {
+                $("#search-history").html(questionHistory);
+            }
+
+            // Load chat history from local storage
+            var chatHistory = localStorage.getItem('chatHistory');
+            if (chatHistory) {
+                $("#chat-history").html(chatHistory);
+                // Scroll to the bottom of the chat history
+                $("#chat-history").scrollTop($("#chat-history")[0].scrollHeight);
+            }
+
+            // Update professor count
+            var professorCount = parseInt(localStorage.getItem('professorCount')) || 0;
+            $("#professor-count").text(professorCount);
+
+            $("#question-form").submit(function (event) {
+                event.preventDefault();
+                var question = $("#question-input").val();
+                if (question.trim() === "") {
+                    return;
+                }
+
+                // Add the question to the search history with search icon
+                var searchIcon = '<i class="fas fa-search search-icon"></i>';
+                var questionHtml = '<p>' + searchIcon + ' ' + question + '</p>';
+                $("#search-history").prepend(questionHtml);
+                localStorage.setItem('questionHistory', $("#search-history").html());
+
+                // Simulate generating chat response from GPT-3
+                var chatResponse = '<p><strong>User:</strong> ' + question + '</p><p><strong>Chatbot:</strong> Here is the chat response.</p>';
+                $("#chat-history").append(chatResponse);
+                // Scroll to the bottom of the chat history
+                $("#chat-history").scrollTop($("#chat-history")[0].scrollHeight);
+
+                // Save chat history to local storage
+                localStorage.setItem('chatHistory', $("#chat-history").html());
+
+                // Clear the question input
+                $("#question-input").val("");
+
+                // Increment professor count
+                professorCount++;
+                $("#professor-count").text(professorCount);
+                localStorage.setItem('professorCount', professorCount.toString());
+            });
+
+            $("#refresh-button").click(function () {
+                // Clear the exam output
+                $("#exam-output").empty();
+
+                // Clear the response history
+                $("#chat-history").empty();
+
+                // Scroll to the top of the page
+                $('html, body').animate({
+                    scrollTop: 0
+                }, 500);
+
+                // Clear the chat history from local storage
+                localStorage.removeItem('chatHistory');
+            });
+
+            $("#clear-history-button").click(function () {
+                // Clear the search history
+                $("#search-history").empty();
+
+                // Clear the question history from local storage
+                localStorage.removeItem('questionHistory');
+            });
+        });
+    </script>
+</body>
+</html>

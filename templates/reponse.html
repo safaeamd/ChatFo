@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Réponse</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+    <h1 class="text-center mt-5">Réponses générées</h1>
+    <div id="response-container" class="container mt-5"></div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Récupérer les réponses générées à partir de la requête GET
+            var responses = getQueryVariable("response");
+            if (responses) {
+                var responseHtml = "";
+                responses.forEach(function (response) {
+                    responseHtml += '<input type="checkbox" checked disabled> ' + response + '<br>';
+                });
+                $("#response-container").html(responseHtml);
+            }
+        });
+
+        // Fonction utilitaire pour récupérer les variables de requête GET
+        function getQueryVariable(variable) {
+            var query = window.location.search.substring(1);
+            var vars = query.split("&");
+            var responses = [];
+
+            for (var i = 0; i < vars.length; i++) {
+                var pair = vars[i].split("=");
+                if (decodeURIComponent(pair[0]) === variable) {
+                    responses.push(decodeURIComponent(pair[1]));
+                }
+            }
+
+            return responses.length ? responses : false;
+        }
+    </script>
+</body>
+</html>
